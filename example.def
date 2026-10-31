@@ -1,0 +1,29 @@
+# Build stage: runs on the workstation's architecture and cross-compiles for
+# the device ({{ TARGETOS }}/{{ TARGETARCH }}), so no emulation is needed.
+Bootstrap: docker
+From: cgr.dev/chainguard/go:latest
+Stage: build
+
+%files
+    go.mod /src/
+    go.sum /src/
+    main.go /src/
+    index.html /src/
+
+%post
+    cd /src
+    # /cache persists between builds, so rebuilds take seconds.
+    export GOMODCACHE=/cache/go/mod GOCACHE=/cache/go/build
+    CGO_ENABLED=0 GOOS={{ TARGETOS }} GOARCH={{ TARGETARCH }} go build -trimpath -ldflags=-s -o /todomvc .
+
+# Final stage: what runs on the device, built for its platform.
+Bootstrap: docker
+From: cgr.dev/chainguard/wolfi-base:latest
+Stage: final
+
+%files from build
+    /todomvc /usr/bin/todomvc
+
+%runscript
+    # The database lives in /data, which persists across updates and rollbacks.
+    exec /usr/bin/todomvc -addr :80 -db /data/todos.db "$@"

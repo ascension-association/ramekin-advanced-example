@@ -1,0 +1,40 @@
+name: todomvc
+# Platform of the target devices. Cross-building needs qemu binfmt support.
+platform: linux/arm64
+
+source:
+  mode: def
+  def: example.def
+  base: docker://cgr.dev/chainguard/wolfi-base:latest
+  overlay: overlay.img
+  overlay_size_mb: 1024
+  # Overlay mode only: the command the container runs.
+  # runscript: /usr/bin/my-app
+
+scan:
+  # Severity at which `ramekin publish` refuses to ship: negligible|low|medium|high|critical|none
+  fail_on: high
+  # Accepted risks, e.g. CVE-2024-12345
+  ignore: []
+
+alerts:
+  # Webhook that receives CVE alerts (Slack, Discord, Mattermost, ntfy, ...).
+  webhook: ""
+  min_severity: high
+
+signing:
+  key: keys/ramekin-sign.key
+  pubkey: keys/ramekin-sign.pub
+
+encryption:
+  # age recipients that can decrypt releases. `ramekin keys generate` adds
+  # the fleet key; `ramekin device init --own-key` adds per-device keys.
+  recipients_file: keys/recipients.txt
+
+releases:
+  # GitHub repository for releases (owner/repo); see the README.
+  github: ascension-association/ramekin-advanced-example
+  # Channel manifests live on main in this repository.
+  branch: main
+
+channels: [stable]

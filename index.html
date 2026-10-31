@@ -1,0 +1,55 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ramekin fleet todos</title>
+<style>
+  body { font: 16px system-ui, sans-serif; background: #f5f5f5; max-width: 32rem; margin: 2rem auto; padding: 0 1rem; }
+  h1 { text-align: center; font-weight: 200; font-size: 4rem; color: #b83f45; margin: 0 0 1rem; }
+  .app { background: #fff; box-shadow: 0 2px 6px rgb(0 0 0 / .15); }
+  #new { width: 100%; box-sizing: border-box; padding: 1rem; font-size: 1.25rem; border: 0; border-bottom: 1px solid #eee; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem; border-bottom: 1px solid #eee; }
+  li span { flex: 1; }
+  li.done span { text-decoration: line-through; color: #999; }
+  button { border: 0; background: none; cursor: pointer; color: #777; }
+  li button { color: #b83f45; font-size: 1.25rem; }
+  footer { display: flex; justify-content: space-between; padding: .75rem 1rem; color: #777; font-size: .875rem; }
+</style>
+<h1>Ramekin fleet todos</h1>
+<div class="app">
+  <input id="new" placeholder="What needs to be done?" autofocus>
+  <ul id="list"></ul>
+  <footer><span id="left"></span><button id="clear">Clear completed</button></footer>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const api = (path, method = "GET", body) =>
+  fetch("/api/todos" + path, { method, body: body && JSON.stringify(body) })
+    .then(r => (r.status === 200 ? r.json() : null));
+
+async function render() {
+  const todos = await api("");
+  $("list").replaceChildren(...todos.map(t => {
+    const li = document.createElement("li");
+    li.className = t.completed ? "done" : "";
+    li.innerHTML = '<input type="checkbox"><span></span><button title="Delete">×</button>';
+    li.querySelector("span").textContent = t.title;
+    const box = li.querySelector("input");
+    box.checked = t.completed;
+    box.onchange = () => api("/" + t.id, "PATCH", { completed: box.checked }).then(render);
+    li.querySelector("button").onclick = () => api("/" + t.id, "DELETE").then(render);
+    return li;
+  }));
+  const left = todos.filter(t => !t.completed).length;
+  $("left").textContent = left + (left === 1 ? " item left" : " items left");
+}
+
+$("new").onkeydown = e => {
+  const title = e.target.value.trim();
+  if (e.key !== "Enter" || !title) return;
+  e.target.value = "";
+  api("", "POST", { title }).then(render);
+};
+$("clear").onclick = () => api("", "DELETE").then(render);
+render();
+</script>
