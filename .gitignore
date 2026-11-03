@@ -1,4 +1,7 @@
 /build/
 /.ramekin/
-# Keys: generate your own with `ramekin keys generate`.
-/keys/
+# Secret keys. Public keys (*.pub, recipients.txt) are safe to commit, and
+# the CVE watch workflow needs ramekin-sign.pub to verify releases.
+/keys/*.key
+/keys/*.agekey
+/keys/devices/
