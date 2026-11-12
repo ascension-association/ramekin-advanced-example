@@ -24,6 +24,13 @@ Stage: final
 %files from build
     /todomvc /usr/bin/todomvc
 
+%post
+    # Chainguard's base image pins its packages, so unpin them and upgrade:
+    # this installs Wolfi's latest security fixes even before the base image
+    # is rebuilt with them.
+    sed -i 's/[=<>~].*//' /etc/apk/world
+    apk upgrade --no-cache
+
 %runscript
     # The database lives in /data, which persists across updates and rollbacks.
     exec /usr/bin/todomvc -addr :80 -db /data/todos.db "$@"
